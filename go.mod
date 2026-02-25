@@ -1,4 +1,4 @@
-module gunginx
+module github.com/gunginx/gunginx
 
 go 1.25.1
 
