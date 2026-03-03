@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/gunginx/gunginx/internal/engine"
 	"github.com/joho/godotenv"
@@ -57,6 +60,7 @@ func loadEnv() (*Env, error) {
 
 func main() {
 	env, err := loadEnv()
+
 	if err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
@@ -75,8 +79,27 @@ func main() {
 		IdleTimeout:  time.Duration(env.IdleTimeout) * time.Second,
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	fmt.Printf("Gunginx Load Balancer started at http://localhost:%s\n", env.Port)
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Gunginx crashed: %v", err)
-	}
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Printf("Gunginx crashed: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	fmt.Println("Shutdown signal received, shutting down gracefully...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	go func() {
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("Gunginx forced to shutdown with error: %v", err)
+		}
+	}()
+
+	<-shutdownCtx.Done()
+	fmt.Println("Gunginx exited cleanly.")
 }

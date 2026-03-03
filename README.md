@@ -86,7 +86,7 @@ gunginx/
 
 **Phase 1: The Core Engine (Foundation & Stability)**
 * [x] **v0.1: The Prototype** * TCP Listener, `httputil.ReverseProxy`, and Mutex-based Round Robin state.
-* [ ] **v0.2: Core Resiliency (Safety Limits)**
+* [x] **v0.2: Core Resiliency (Safety Limits)**
     * Implement `ReadTimeout`, `WriteTimeout`, and `IdleTimeout` to prevent memory leaks from hanging backends.
     * Implement Graceful Shutdown (OS Signal listener) to finish active requests before exiting.
 * [ ] **v0.3: High-Performance Routing**
